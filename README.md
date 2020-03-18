@@ -12,7 +12,7 @@ So I took no time into setting up the client on my workstation and start recievi
 ![](https://github.com/cmilanf/docker-foldingathome/raw/master/images/FAHControl_desktop0.png)
 
 I spreaded the word over social networks and many people added to the initiative:
-![](https://twitter.com/cmilanf/status/1238960691865944067)
+[](https://twitter.com/cmilanf/status/1238960691865944067)
 
 But I thought I could do something more using container and cloud technologies and this is what this repository is about.
 
