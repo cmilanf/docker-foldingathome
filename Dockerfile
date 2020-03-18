@@ -1,4 +1,4 @@
-FROM nvidia/cuda:10.2-base
+FROM nvidia/opencl:latest
 
 LABEL title="Folding@home client with CUDA drivers" \
   maintainer="Carlos Milán Figueredo" \
@@ -6,6 +6,7 @@ LABEL title="Folding@home client with CUDA drivers" \
   url1="https://calnus.com" \
   url2="http://www.hispamsx.org" \
   contrib1="Carlos Mendible - https://github.com/cmendible/folding-at-home" \
+  contrib2="amalic - https://hub.docker.com/r/amalic/nvdocker-folding-home" \
   bbs="telnet://bbs.hispamsx.org" \
   twitter="@cmilanf" \
   thanksto="Beatriz Sebastián Peña" \
@@ -17,8 +18,8 @@ ARG FAHCLIENT_MAJOR_VERSION=7.5
 ARG FAHCLIENT_DOWNLOAD_URL=https://download.foldingathome.org/releases/public/release/fahclient/debian-stable-64bit/v${FAHCLIENT_MAJOR_VERSION}/fahclient_${FAHCLIENT_VERSION}_amd64.deb
 
 RUN apt-get update \
-    && apt-get -y install --no-install-recommends curl \
-    && curl -L -o /tmp/fahclient.deb ${FAHCLIENT_DOWNLOAD_URL} \
+    && apt-get -y install --no-install-recommends wget \
+    && wget --no-check-certificate -O /tmp/fahclient.deb ${FAHCLIENT_DOWNLOAD_URL} \
     && dpkg --unpack /tmp/fahclient.deb \
     && rm -f /var/lib/dpkg/info/fahclient.postinst \
     && dpkg --configure fahclient \

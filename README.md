@@ -1,5 +1,5 @@
 # Docker Folding@home at Microsoft AKS and ACI with GPU support
-[Folding@home](https://foldingathome.org/) is a biomedical research project that use the distributed computing power of volunteers arround the world. It consist on a client program that retrieves a computing workload from a server processes it and return the results back. There are client versions for Windows, macOS or GNU/Linux.
+[Folding@home](https://foldingathome.org/) is a biomedical research project that uses the distributed computing power of volunteers arround the world. It consist on a client program that retrieves a computing workload from a server, processes it and return the results back. There are client versions for Windows, macOS or GNU/Linux.
 
 The biomedical research is focused in the complex calculations of proteins folding that would allow scientist to develop a drug or antibody targeting. This would have impact in the treatment of a wide range of diseases.
 
@@ -20,7 +20,7 @@ But I thought I could do something more using container and cloud technologies a
 Many organizations and individuals use public cloud for taking advantages of his features, such as hyper-scale, pay as you go model, instant provisioning of compute resources... With this packaged solution you are on the fasttrack for donating a bit or a lot of your compute spending on Azure and helping the with the research.
 
 This repository includes:
-  * A **Dockerfile** that builds a Docker image with the Folding@home (FAH from now) client ready to run as a container. It is based on the [official NVIDIA CUDA docker image](https://hub.docker.com/r/nvidia/cuda/), Ubuntu 18.04 flavour.
+  * A **Dockerfile** that builds a Docker image with the Folding@home (FAH from now) client ready to run as a container. It is based on the [official NVIDIA OpenCL docker image](https://hub.docker.com/r/nvidia/opencl/), Ubuntu 18.04 flavour.
   * Several **Azure Resource Manager templates** that are able to deploy a GPU-enabled (NC6 Azure VM by default) **Azure Kubernetes Service** (AKS) cluster and/or **Azure Container Instances** (ACI). While AKS is able to leverage GPU computing power, it is still on preview stage for ACI, so for the time being, ACI deployments will be CPU-only.
   * Two **Kubernetes manifests**, one for installing [NVIDIA device plugin for Kubernetes](https://github.com/NVIDIA/k8s-device-plugin), that will made our GPU visible to our pods and manageable by Kubernetes; the second one for actually deploying the FAH client.
   * Two **low level bash scripts** that creates de Azure AD Service Principal required for AKS and the AKS itself; while the second script clean the created resources.
@@ -78,7 +78,7 @@ Time to configure Kubernetes!
 
   ![](https://github.com/cmilanf/docker-foldingathome/raw/master/images/setup-k8s-fah1.png)
 
-You can see the NVIDIA CUDA detected the Tesla K80 that the Standard_NC6 Azure Virtual Machine has. The environment is ready and the pod will automatically pickup workloads for both: CPU and GPU (CUDA library only, no OpenCL).
+You can see detected the Tesla K80 that the Standard_NC6 Azure Virtual Machine has. The environment is ready and the pod will automatically pickup workloads for both: CPU and GPU (CUDA and OpenCL enabled).
 
 ## Azure Container Instances
 Instead of going the AKS way, we can go to ACI that is a single step: select **ACI** from the menu:
