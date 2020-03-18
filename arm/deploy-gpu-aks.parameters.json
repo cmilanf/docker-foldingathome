@@ -1,0 +1,93 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "resourceName": {
+      "value": "aks-we-fah-001"
+    },
+    "existingVirtualNetworkResourceGroup": {
+      "value": "rg-we-fah-001"
+    },
+    "dnsPrefix": {
+      "value": "fah-calnus"
+    },
+    "createVnet": {
+      "value": true
+    },
+    "linuxAgentCount": {
+      "value": 1
+    },
+    "kubernetesVersion": {
+      "value": "1.15.7"
+    },
+    "networkPlugin": {
+      "value": "kubenet"
+    },
+    "existingServicePrincipalObjectId": {
+      "value": ""
+    },
+    "existingServicePrincipalClientId": {
+      "value": ""
+    },
+    "existingServicePrincipalClientSecret": {
+      "value": ""
+    },
+    "newOrExistingVirtualNetworkName": {
+      "value": "vnet-we-aks-fah-001"
+    },
+    "newOrExistingLinuxSubnetName": {
+      "value": "linuxAksSubnet"
+    },
+    "newVirtualNetworkAddressPrefix": {
+      "value": "10.24.0.0/20"
+    },
+    "newGatewaySubnetAddressPrefix": {
+      "value": "10.24.0.0/26"
+    },
+    "newDmzSubnetAddressPrefix": {
+      "value": "10.24.1.0/24"
+    },
+    "newLinuxSubnetAddressPrefix": {
+      "value": "10.24.2.0/24"
+    },
+    "linuxAgentVMSize": {
+      "value": "Standard_NC6"
+    },
+    "linuxMaxPods": {
+      "value": 30
+    },
+    "enableRBAC": {
+      "value": false
+    },
+    "serviceCidr": {
+      "value": "10.241.0.0/16"
+    },
+    "dnsServiceIP": {
+      "value": "10.241.0.10"
+    },
+    "dockerBridgeCidr": {
+      "value": "172.17.0.1/16"
+    },
+    "enableHttpApplicationRouting": {
+      "value": false
+    },
+    "linuxAdminUsername": {
+      "value": "aksAdmin"
+    },
+    "linuxAdminSshPublicKey": {
+      "value": ""
+    },
+    "createAcr": {
+      "value": false
+    },
+    "acrName": {
+      "value": "fah"
+    },
+    "acrAdminUserEnabled": {
+      "value": false
+    },
+    "acrSku": {
+      "value": "Basic"
+    }
+  }
+}

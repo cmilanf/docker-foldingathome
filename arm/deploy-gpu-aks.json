@@ -1,0 +1,408 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourceName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the Managed Cluster resource."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "The Azure location of the AKS resource."
+            }
+        },
+        "linuxAdminUsername": {
+            "type": "string",
+            "defaultValue": "aksAdmin",
+            "metadata": {
+                "description": "The root username for Linux"
+            }
+        },
+        "linuxAdminSshPublicKey": {
+            "type": "string",
+            "metadata": {
+                "description": "The root SSH public key for Linux"
+            }
+        },
+        "dnsPrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "Optional DNS prefix to use with hosted Kubernetes API server FQDN."
+            }
+        },
+        "createVnet": {
+            "type": "bool",
+            "defaultValue": true,
+            "metadata": {
+                "description": "Should we create a new VNET for the cluster?"
+            }
+        },
+        "linuxOsDiskSizeGB": {
+            "defaultValue": 0,
+            "minValue": 0,
+            "maxValue": 1023,
+            "type": "int",
+            "metadata": {
+                "description": "Disk size (in GB) to provision for each of the agent pool nodes. This value ranges from 0 to 1023. Specifying 0 will apply the default disk size for that agentVMSize."
+            }
+        },
+        "linuxAgentCount": {
+            "defaultValue": 3,
+            "minValue": 1,
+            "maxValue": 50,
+            "type": "int",
+            "metadata": {
+                "description": "The number of agent nodes for the cluster. Production workloads have a recommended minimum of 3."
+            }
+        },
+        "linuxAgentVMSize": {
+            "defaultValue": "Standard_NC6s_v3",
+            "type": "string",
+            "metadata": {
+                "description": "The size of the Virtual Machine."
+            }
+        },
+        "existingServicePrincipalObjectId": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Oject ID against which the Network Contributor roles will be assigned on the subnet"
+            }
+        },
+        "existingServicePrincipalClientId": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Client ID (used by cloudprovider)"
+            }
+        },
+        "existingServicePrincipalClientSecret": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The Service Principal Client Secret."
+            }
+        },
+        "kubernetesVersion": {
+            "defaultValue": "1.15.7",
+            "type": "string",
+            "metadata": {
+                "description": "The version of Kubernetes."
+            }
+        },
+        "enableHttpApplicationRouting": {
+            "defaultValue": false,
+            "type": "bool",
+            "metadata": {
+                "description": "boolean flag to turn on and off of http application routing"
+            }
+        },
+        "networkPlugin": {
+            "allowedValues": [
+                "azure",
+                "kubenet"
+            ],
+            "defaultValue": "azure",
+            "type": "string",
+            "metadata": {
+                "description": "Network plugin used for building Kubernetes network."
+            }
+        },
+        "linuxMaxPods": {
+            "defaultValue": 30,
+            "type": "int",
+            "metadata": {
+                "description": "Maximum number of pods that can run on a node."
+            }
+        },
+        "enableRBAC": {
+            "defaultValue": true,
+            "type": "bool",
+            "metadata": {
+                "description": "boolean flag to turn on and off of RBAC"
+            }
+        },
+        "newOrExistingVirtualNetworkName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of an existing VNET that will contain this AKS deployment."
+            }
+        },
+        "existingVirtualNetworkResourceGroup": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the existing VNET resource group"
+            }
+        },
+        "newOrExistingLinuxSubnetName": {
+            "type": "string",
+            "metadata": {
+                "description": "Subnet name that will contain the Linux nodes"
+            }
+        },
+        "newVirtualNetworkAddressPrefix": {
+            "type": "string",
+            "defaultValue": "10.240.0.0/16",
+            "metadata": {
+                "description": "New VNET address prefix, if you want to create one"
+            }
+        },
+        "newGatewaySubnetAddressPrefix": {
+            "type": "string",
+            "defaultValue": "10.240.0.0/26",
+            "metadata": {
+                "description": "GatewaySubnet for Azure VPN Gateway"
+            }
+        },
+        "newDmzSubnetAddressPrefix": {
+            "type": "string",
+            "defaultValue": "10.240.0.128/25",
+            "metadata": {
+                "description": "DMZ subnet for resources such as Application Gateway or Azure Firewall"
+            }
+        },
+        "newLinuxSubnetAddressPrefix": {
+            "type": "string",
+            "defaultValue": "10.240.4.0/22",
+            "metadata": {
+                "description": "New subnet address prefix, if you want to create one"
+            }
+        },
+        "serviceCidr": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/16",
+            "metadata": {
+                "description": "A CIDR notation IP range from which to assign service cluster IPs."
+            }
+        },
+        "dnsServiceIP": {
+            "type": "string",
+            "defaultValue": "10.0.0.10",
+            "metadata": {
+                "description": "Containers DNS server IP address."
+            }
+        },
+        "dockerBridgeCidr": {
+            "type": "string",
+            "defaultValue": "172.17.0.1/16",
+            "metadata": {
+                "description": "A CIDR notation IP for Docker bridge."
+            }
+        },
+        "createAcr": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Create Azure Container Registry"
+            }
+        },
+        "acrName": {
+            "type": "string",
+            "metadata": {
+                "description": "Azure Container Registry Name"
+            }
+        },
+        "acrAdminUserEnabled": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Enable admin user that have push / pull permission to the registry."
+            }
+        },
+        "acrSku": {
+            "type": "string",
+            "metadata": {
+                "description": "Tier of your Azure Container Registry."
+            },
+            "defaultValue": "Basic",
+            "allowedValues": [
+                "Basic",
+                "Standard",
+                "Premium"
+            ]
+        }
+    },
+    "variables": {
+        "linuxVnetSubnetId": "[resourceId(parameters('existingVirtualNetworkResourceGroup'),'Microsoft.Network/virtualNetworks/subnets',parameters('newOrExistingVirtualNetworkName'),parameters('newOrExistingLinuxSubnetName'))]",
+        "networkContributorRole": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '4d97b98b-1d4f-4787-a291-c67834d212e7')]",
+        "acrPullRole": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'acdd72a7-3385-48ef-bd42-f606fba81ae7')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.ContainerService/managedClusters",
+            "name": "[parameters('resourceName')]",
+            "apiVersion": "2019-06-01",
+            "location": "[parameters('location')]",
+            "tags": {},
+            "dependsOn": [
+                "[concat('Microsoft.Resources/deployments/', 'RoleAssignmentDeployment')]"
+            ],
+            "properties": {
+                "kubernetesVersion": "[parameters('kubernetesVersion')]",
+                "enableRBAC": "[parameters('enableRBAC')]",
+                "dnsPrefix": "[parameters('dnsPrefix')]",
+                "addonProfiles": {
+                    "httpApplicationRouting": {
+                        "enabled": "[parameters('enableHttpApplicationRouting')]"
+                    }
+                },
+                "agentPoolProfiles": [
+                    {
+                        "name": "linuxgpu0",
+                        "type": "VirtualMachineScaleSets",
+                        "scaleSetPriority": "Regular",
+                        "osDiskSizeGB": "[parameters('linuxOsDiskSizeGB')]",
+                        "count": "[parameters('linuxAgentCount')]",
+                        "vmSize": "[parameters('linuxAgentVMSize')]",
+                        "osType": "Linux",
+                        "storageProfile": "ManagedDisks",
+                        "vnetSubnetID": "[variables('linuxVnetSubnetID')]",
+                        "maxPods": "[parameters('linuxMaxPods')]",
+                        "orchestrationVersion": "[parameters('kubernetesVersion')]"
+                    }
+                ],
+                "linuxProfile": {
+                    "adminUsername": "[parameters('linuxAdminUsername')]",
+                    "ssh": {
+                        "publicKeys": [
+                            {
+                                "keyData": "[parameters('linuxAdminSshPublicKey')]"
+                            }
+                        ]
+                    }
+                },
+                "servicePrincipalProfile": {
+                    "clientId": "[parameters('existingServicePrincipalClientId')]",
+                    "secret": "[parameters('existingServicePrincipalClientSecret')]"
+                },
+                "networkProfile": {
+                    "networkPlugin": "[parameters('networkPlugin')]",
+                    "serviceCidr": "[parameters('serviceCidr')]",
+                    "dnsServiceIP": "[parameters('dnsServiceIP')]",
+                    "dockerBridgeCidr": "[parameters('dockerBridgeCidr')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "name": "RoleAssignmentDeployment",
+            "apiVersion": "2017-05-10",
+            "subscriptionId": "[subscription().subscriptionId]",
+            "resourceGroup": "[parameters('existingVirtualNetworkResourceGroup')]",
+            "dependsOn": [
+                "[concat('Microsoft.Resources/deployments/', 'CreateVnetForAksCluster')]",
+                "[concat('Microsoft.ContainerRegistry/registries/', parameters('acrName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "variables": {},
+                    "resources": [
+                        {
+                            "type": "Microsoft.Network/virtualNetworks/subnets/providers/roleAssignments",
+                            "apiVersion": "2017-05-01",
+                            "name": "[concat(parameters('newOrExistingVirtualNetworkName'), '/', parameters('newOrExistingLinuxSubnetName'), '/Microsoft.Authorization/', guid(resourceGroup().id, variables('linuxVnetSubnetId')))]",
+                            "properties": {
+                                "roleDefinitionId": "[variables('networkContributorRole')]",
+                                "principalId": "[parameters('existingServicePrincipalObjectId')]",
+                                "scope": "[variables('linuxVnetSubnetId')]"
+                            }
+                        },
+                        {
+                            "type": "Microsoft.ContainerRegistry/registries/providers/roleAssignments",
+                            "apiVersion": "2017-05-01",
+                            "condition": "[parameters('createAcr')]",
+                            "name": "[concat(parameters('acrName'), '/', '/Microsoft.Authorization/', guid(resourceGroup().id, parameters('acrName')))]",
+                            "properties": {
+                                "roleDefinitionId": "[variables('acrPullRole')]",
+                                "principalId": "[parameters('existingServicePrincipalObjectId')]",
+                                "scope": "[resourceId(resourceGroup().name, 'Microsoft.ContainerRegistry/registries', parameters('acrName'))]"
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "name": "CreateVnetForAksCluster",
+            "condition": "[parameters('createVnet')]",
+            "apiVersion": "2017-05-10",
+            "subscriptionId": "[subscription().subscriptionId]",
+            "resourceGroup": "[parameters('existingVirtualNetworkResourceGroup')]",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "variables": {},
+                    "resources": [
+                        {
+                            "apiVersion": "2018-06-01",
+                            "type": "Microsoft.Network/virtualNetworks",
+                            "name": "[parameters('newOrExistingVirtualNetworkName')]",
+                            "location": "[parameters('location')]",
+                            "properties": {
+                                "addressSpace": {
+                                    "addressPrefixes": [
+                                        "[parameters('newVirtualNetworkAddressPrefix')]"
+                                    ]
+                                },
+                                "subnets": [
+                                    {
+                                        "name": "GatewaySubnet",
+                                        "properties": {
+                                            "addressPrefix": "[parameters('newGatewaySubnetAddressPrefix')]"
+                                        }
+                                    },
+                                    {
+                                        "name": "dmz",
+                                        "properties": {
+                                            "addressPrefix": "[parameters('newDmzSubnetAddressPrefix')]"
+                                        }
+                                    },
+                                    {
+                                        "name": "[parameters('newOrExistingLinuxSubnetName')]",
+                                        "properties": {
+                                            "addressPrefix": "[parameters('newLinuxSubnetAddressPrefix')]"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "[parameters('acrName')]",
+            "type": "Microsoft.ContainerRegistry/registries",
+            "apiVersion": "2017-10-01",
+            "location": "[parameters('location')]",
+            "condition": "[parameters('createAcr')]",
+            "sku": {
+                "name": "[parameters('acrSku')]",
+                "tier": "[parameters('acrSku')]"
+            },
+            "properties": {
+                "adminUserEnabled": "[parameters('acrAdminUserEnabled')]"
+            }
+        }
+    ],
+    "outputs": {
+        "controlPlaneFQDN": {
+            "type": "string",
+            "value": "[reference(concat('Microsoft.ContainerService/managedClusters/', parameters('resourceName'))).fqdn]"
+        },
+        "acrLoginServer": {
+            "condition": "[parameters('createAcr')]",
+            "value": "[reference(resourceId('Microsoft.ContainerRegistry/registries',parameters('acrName')),'2017-10-01').loginServer]",
+            "type": "string"
+        }
+    }
+}

@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fahclient
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: fahclient
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: fahclient
+    spec:
+      nodeSelector:
+        'kubernetes.io/os': linux
+      containers:
+      - image: cmilanf/fahclient:latest
+        imagePullPolicy: Always
+        name: fahclient
+        env:
+        - name: FAH_USER
+          value: Anonymous
+        - name: FAH_TEAM
+          value: '0'
+        - name: USE_GPU
+          value: 'true'
+        - name: USE_SMP
+          value: 'true'
+        - name: POWER
+          value: full
+        command: ["/usr/bin/FAHClient"]
+        args: ["--user=$(FAH_USER)", "--team=$(FAH_TEAM)", "--gpu=$(USE_GPU)", "--smp=$(USE_SMP)", "--power=$(POWER)"]
+        resources:
+          requests:
+            memory: 512Mi
+            cpu: 1000m
+            nvidia.com/gpu: 1
+          limits:
+            memory: 2048Mi
+            cpu: 3000m
+            nvidia.com/gpu: 1

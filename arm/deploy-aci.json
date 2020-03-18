@@ -1,0 +1,117 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "name": {
+        "type": "string",
+        "metadata": {
+          "description": "Name for the container group"
+        },
+        "defaultValue": "cg-fahclient"
+      },
+      "image": {
+        "type": "string",
+        "metadata": {
+          "description": "Container image to deploy. Should be of the form accountName/imagename:tag for images stored in Docker Hub or a fully qualified URI for a private registry like the Azure Container Registry."
+        },
+        "defaultValue": "cmilanf/fahclient:latest"
+      },
+      "cpuCores": {
+        "type": "string",
+        "metadata": {
+          "description": "The number of CPU cores to allocate to the container. Must be an integer."
+        },
+        "defaultValue": "1.0"
+      },
+      "memoryInGb": {
+        "type": "string",
+        "metadata": {
+          "description": "The amount of memory to allocate to the container in gigabytes."
+        },
+        "defaultValue": "0.5"
+      },
+      "count": {
+        "type": "int",
+        "defaultValue": 1,
+        "metadata": {
+          "description": "How many instances do you want to deploy?"
+        }
+      },
+      "location": {
+        "type": "string",
+        "defaultValue": "[resourceGroup().location]",
+        "metadata": {
+          "description": "Location for all resources."
+        }
+      },
+      "restartPolicy": {
+        "type": "string",
+        "defaultValue": "onfailure",
+        "metadata": {
+          "description": "The behavior of Azure runtime if container has stopped."
+        },
+        "allowedValues": [
+          "never",
+          "always",
+          "onfailure"
+        ]
+      },
+      "fah-user": {
+          "type": "string",
+          "defaultValue": "Anonymous",
+          "metadata": {
+              "description": "The user handle to use in the Folding@home network"
+          }
+      },
+      "fah-team": {
+          "type": "string",
+          "defaultValue": "0",
+          "metadata": {
+              "description": "The team number to use in the Folding@home network"
+          }
+      },
+      "fah-use-gpu": {
+          "type": "string",
+          "defaultValue": "false",
+          "metadata": {
+              "description": "Use ACI GPU features, if available"
+          }
+      }
+    },
+    "variables": {},
+    "resources": [
+      {
+        "name": "[concat(parameters('name'), '-', copyIndex())]",
+        "type": "Microsoft.ContainerInstance/containerGroups",
+        "apiVersion": "2018-10-01",
+        "location": "[parameters('location')]",
+        "copy": {
+          "name": "aci-copy",
+          "count": "[parameters('count')]",
+          "mode": "Parallel"
+        },
+        "properties": {
+          "containers": [
+            {
+              "name": "[parameters('name')]",
+              "properties": {
+                "image": "[parameters('image')]",
+                "command": [
+                    "/usr/bin/FAHClient",
+                    "[concat('--user=', parameters('fah-user'), ' --team=', parameters('fah-team'), ' --gpu=', parameters('fah-use-gpu'),' --smp=true --power=full')]"
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "[parameters('cpuCores')]",
+                    "memoryInGb": "[parameters('memoryInGb')]"
+                  }
+                }
+              }
+            }
+          ],
+          "osType": "Linux",
+          "restartPolicy": "[parameters('restartPolicy')]"
+        }
+      }
+    ]
+  }
