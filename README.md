@@ -34,19 +34,19 @@ Follow these steps to have your FAH client running on AKS or ACI:
   1. Install git and clone this repository `git clone https://github.com/cmilanf/docker-foldingathome.git`.
   2. Install [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) on your GNU/Linux distribution.
   3. Install [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
-  4. Install script dependencies: `dialog`, `sed`, `jq`, `ssh-keygen`. They should be available on the package management tool of your GNU  Linux distribution. As I will be providing a ready-made Docker image of the FAH client, you don't need Docker or building the image.
+  4. Install script dependencies: `dialog`, `sed`, `jq`, `ssh-keygen`. They should be available on the package management tool of your GNU/Linux distribution. As I will be providing a ready-made Docker image of the FAH client, you don't need Docker or building the image.
   5. Login into Azure by typing `az login`.
   6. List available subscriptions with `az account list -o table` and select one with `az account set -s <subscription id>`. Keep the id  number at hand.
-  7. Launch setup utility with `./setup.bash -g <Azure resource group name to create or use> -s <subscription name or id> -l <location>`.  For example: `./setup.bash -g fah -s MSDN -l westeurope
+  7. Launch setup utility with `./setup.bash -g <Azure resource group name to create or use> -s <subscription name or id> -l <location>`.  For example: `./setup.bash -g fah -s MSDN -l westeurope`
 
 After following the steps you will be able to see the following screen:
 ![](https://github.com/cmilanf/docker-foldingathome/raw/master/images/setup-mainmenu.png)
 
-ARM templates at `arm/`` folder are already prepared to use my FAH Docker image, so Docker related operations are optional.
+ARM templates at `arm/` folder are already prepared to use my FAH Docker image, so Docker related operations are optional.
 
 ## Quickstart - Deploying Azure Kubernetes Service
 
-  1. Select **AKS** and you should see all the data preloaded. Push `Deploy` button and the Azure AD and AKS cluster will be deployed. Please, note that GPU resources on Azure are not cheap, I take no responsability for your consumption! Please use the [Azure Calculator](https://azure.microsoft.com/en-us/pricing/calculator/) to estimate your costs!
+  1. Select **AKS** and you should see all the data preloaded. Push `Deploy` button and the Azure AD and AKS cluster will be deployed. Please, **note that GPU resources on Azure are NOT CHEAP, I take no responsability for your consumption!** Use the [Azure Calculator](https://azure.microsoft.com/en-us/pricing/calculator/) to estimate your costs!
 
 ![](https://github.com/cmilanf/docker-foldingathome/raw/master/images/setup-aks0.png)
 
