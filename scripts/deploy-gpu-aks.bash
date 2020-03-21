@@ -20,8 +20,19 @@ chkbin () {
     fi
 }
 
+# Function to change values in JSON parameters file
+# $1 -> Parameter name
+# $2 -> Variable with the parameter value
+# $3 -> Parameter file name
+jqsubs () {
+	jq ".parameters.$1.value = \$argument" --arg argument "$2" $3 \
+    	> $3.tmp && mv -f $3.tmp $3
+}
+
 headermsg
 LOCATION='westeurope'
+AKS_CLUSTER_NAME=''
+DNS_PREFIX=''
 while [ $# -gt 0 ]
 do
 	case "$1" in
@@ -49,6 +60,14 @@ do
 			LOCATION="$2"
 			shift 2
 			;;
+		--aks-cluster-name)
+			AKS_CLUSTER_NAME="$2"
+			shift 2
+			;;
+		--dns-prefix)
+			DNS_PREFIX="$2"
+			shift 2
+			;;
 		*)
 			echo "ERROR: Incorrect arguments or syntax fail: $1"; echo ''
 			usagemsg
@@ -69,57 +88,47 @@ chkbin az
 chkbin sed
 
 DATE=$(date '+%Y%m%d%H%M%S')
-RESOURCENAME=$(jq -r .parameters.resourceName.value ${PARAMETERS_FILE})
+if ! [ -z ${AKS_CLUSTER_NAME} ]; then
+	jqsubs 'resourceName' ${AKS_CLUSTER_NAME} ${PARAMETERS_FILE}
+else
+	AKS_CLUSTER_NAME=$(jq -r .parameters.resourceName.value ${PARAMETERS_FILE})
+fi
 if [ "${CREATE_AAD_SP}" == 'yes' ]; then
     echo "Creating Service Principal..."
-    SP=$(az ad sp create-for-rbac --name ${RESOURCENAME}-${DATE} --output json)
+    SP=$(az ad sp create-for-rbac --name ${AKS_CLUSTER_NAME}-${DATE} --output json)
     echo ${SP} | jq . > aks_sp_cred.json
     SP_NAME=$(echo ${SP} | jq -r .name)
     SP_APPID=$(echo ${SP} | jq -r .appId)
     SP_PWD=$(echo ${SP} | jq -r .password)
     SP_OBJECTID=$(az ad sp show --id ${SP_NAME} --query objectId -o tsv)
-    cp -f ${PARAMETERS_FILE} ${PARAMETERS_FILE}.bak 
-    jq '.parameters.existingServicePrincipalClientId.value = $sp_appid' --arg sp_appid "${SP_APPID}" ${PARAMETERS_FILE} \
-    	> ${PARAMETERS_FILE}.tmp \
-    	&& mv -f ${PARAMETERS_FILE}.tmp ${PARAMETERS_FILE}
-    jq '.parameters.existingServicePrincipalClientSecret.value = $sp_pwd' --arg sp_pwd "${SP_PWD}" ${PARAMETERS_FILE} \
-    	> ${PARAMETERS_FILE}.tmp \
-    	&& mv -f ${PARAMETERS_FILE}.tmp ${PARAMETERS_FILE}
-    jq '.parameters.existingServicePrincipalObjectId.value = $sp_objectid' --arg sp_objectid "${SP_OBJECTID}" ${PARAMETERS_FILE} \
-    	> ${PARAMETERS_FILE}.tmp \
-    	&& mv -f ${PARAMETERS_FILE}.tmp ${PARAMETERS_FILE}
-    jq '.parameters.existingVirtualNetworkResourceGroup.value = $resource_group_name' --arg resource_group_name "${RESOURCE_GROUP_NAME}" ${PARAMETERS_FILE} \
-    	> ${PARAMETERS_FILE}.tmp \
-    	&& mv -f ${PARAMETERS_FILE}.tmp ${PARAMETERS_FILE}
+    cp -f ${PARAMETERS_FILE} ${PARAMETERS_FILE}.bak
+	jqsubs 'existingServicePrincipalClientId' "${SP_APPID}" ${PARAMETERS_FILE}
+	jqsubs 'existingServicePrincipalClientSecret' "${SP_PWD}" ${PARAMETERS_FILE}
+	jqsubs 'existingServicePrincipalObjectId' "${SP_OBJECTID}" ${PARAMETERS_FILE}
+	jqsubs 'existingVirtualNetworkResourceGroup' "${RESOURCE_GROUP_NAME}" ${PARAMETERS_FILE}
 fi
 
 echo "Generating GNU/Linux root SSH key pair..."
 ssh-keygen -b 2048 -t rsa -f linuxAdminSshKey -q -N ""
-jq '.parameters.linuxAdminSshPublicKey.value = $public_key' --arg public_key "$(cat linuxAdminSshKey.pub)" ${PARAMETERS_FILE} \
-    > ${PARAMETERS_FILE}.tmp \
-    && mv -f ${PARAMETERS_FILE}.tmp ${PARAMETERS_FILE}
-sed -i '/^$/d' ${PARAMETERS_FILE}
-
-jq '.parameters.linuxAdminSshPublicKey.value = $public_key' --arg public_key "$(cat linuxAdminSshKey.pub)" ${PARAMETERS_FILE} \
-    > ${PARAMETERS_FILE}.tmp \
-    && mv -f ${PARAMETERS_FILE}.tmp ${PARAMETERS_FILE}
-sed -i '/^$/d' ${PARAMETERS_FILE}
+jqsubs 'linuxAdminSshPublicKey' "$(cat linuxAdminSshKey.pub)" ${PARAMETERS_FILE}
 
 if [ "$(jq .parameters.createVnet.value arm/deploy-gpu-aks.parameters.json)" = 'true' ]
 then
-	jq '.parameters.existingVirtualNetworkResourceGroup.value = $vnetrg' --arg vnetrg "${RESOURCE_GROUP_NAME}" ${PARAMETERS_FILE} \
-    	> ${PARAMETERS_FILE}.tmp \
-    	&& mv -f ${PARAMETERS_FILE}.tmp ${PARAMETERS_FILE}
-	sed -i '/^$/d' ${PARAMETERS_FILE}
+	jqsubs 'existingVirtualNetworkResourceGroup' "${RESOURCE_GROUP_NAME}" ${PARAMETERS_FILE}
+	jqsubs 'newOrExistingVirtualNetworkName' "${AKS_CLUSTER_NAME}" ${PARAMETERS_FILE}
 fi
+if ! [ -z ${DNS_PREFIX} ]; then
+	jqsubs 'dnsPrefix' "${DNS_PREFIX}" ${PARAMETERS_FILE}
+fi
+sed -i '/^$/d' ${PARAMETERS_FILE}
 
 echo "Deploying managed Kubernetes cluster..."
-if [ $(az group exists -g ${RESOURCE_GROUP_NAME}) = 'false' ]; then
-	az group create -n ${RESOURCE_GROUP_NAME} -l ${LOCATION}
+if [ $(az group exists -g ${RESOURCE_GROUP_NAME} --subscription ${SUBSCRIPTION}) = 'false' ]; then
+	az group create -n ${RESOURCE_GROUP_NAME} -l ${LOCATION} --subscription ${SUBSCRIPTION}
 fi
 az deployment group create \
 	-g ${RESOURCE_GROUP_NAME} \
-	-n ${RESOURCENAME}-deployment \
+	-n ${AKS_CLUSTER_NAME}-deployment \
 	--template-file ${TEMPLATE_FILE} \
 	--parameters @${PARAMETERS_FILE} \
     --subscription ${SUBSCRIPTION} \
