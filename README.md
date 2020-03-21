@@ -46,6 +46,7 @@ ARM templates at `arm/` folder are already prepared to use my FAH Docker image, 
 
 ## Quickstart - Deploying Azure Kubernetes Service
 
+  0. The file `arm/deploy-gpu-aks.parameters.json` will be used to define your environment. Most notable preferences are: AKS with kubenet networking, a single Linux pool in VMSS mode, Standard_NC6_Promo VM type. Edit this file to suit your preferences.
   1. Select **AKS** and you should see all the data preloaded. Push `Deploy` button and the Azure AD and AKS cluster will be deployed. Please, **note that GPU resources on Azure are NOT CHEAP, I take no responsability for your consumption!** Use the [Azure Calculator](https://azure.microsoft.com/en-us/pricing/calculator/) to estimate your costs!
 
 ![](https://github.com/cmilanf/docker-foldingathome/raw/master/images/setup-aks0.png)
