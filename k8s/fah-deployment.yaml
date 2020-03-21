@@ -21,6 +21,8 @@ spec:
         imagePullPolicy: Always
         name: fahclient
         env:
+        - name: CAUSE
+          value: ANY
         - name: FAH_USER
           value: Anonymous
         - name: FAH_TEAM
@@ -31,14 +33,19 @@ spec:
           value: 'true'
         - name: POWER
           value: full
+        - name: CPUS
+          value: '5'
+        - name: MEM
+          value: '2147483648'
         command: ["/usr/bin/FAHClient"]
-        args: ["--user=$(FAH_USER)", "--team=$(FAH_TEAM)", "--gpu=$(USE_GPU)", "--smp=$(USE_SMP)", "--power=$(POWER)"]
+        args: ["--user=$(FAH_USER)", "--team=$(FAH_TEAM)", "--gpu=$(USE_GPU)", "--smp=$(USE_SMP)", "--power=$(POWER)",
+          "--memory=$(MEM)", "--cpus=$(CPUS)", "--cause=$(CAUSE)"]
         resources:
           requests:
             memory: 512Mi
             cpu: 1000m
             nvidia.com/gpu: 1
           limits:
-            memory: 10240Mi
+            memory: 2048Mi
             cpu: 5000m
             nvidia.com/gpu: 1

@@ -4,6 +4,7 @@ arm
 k8s
 images
 scripts
+output
 LICENSE
 README.md
 setup.bash

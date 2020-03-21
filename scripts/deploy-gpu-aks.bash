@@ -86,41 +86,43 @@ chkbin jq
 chkbin ssh-keygen
 chkbin az
 chkbin sed
+mkdir -p output
+OUTPUT_PARAMETERS_FILE='output/deploy-gpu-aks.parameters.json'
+cp -f ${PARAMETERS_FILE} ${OUTPUT_PARAMETERS_FILE}
 
 DATE=$(date '+%Y%m%d%H%M%S')
 if ! [ -z ${AKS_CLUSTER_NAME} ]; then
-	jqsubs 'resourceName' ${AKS_CLUSTER_NAME} ${PARAMETERS_FILE}
+	jqsubs 'resourceName' ${AKS_CLUSTER_NAME} ${OUTPUT_PARAMETERS_FILE}
 else
-	AKS_CLUSTER_NAME=$(jq -r .parameters.resourceName.value ${PARAMETERS_FILE})
+	AKS_CLUSTER_NAME=$(jq -r .parameters.resourceName.value ${OUTPUT_PARAMETERS_FILE})
 fi
 if [ "${CREATE_AAD_SP}" == 'yes' ]; then
     echo "Creating Service Principal..."
     SP=$(az ad sp create-for-rbac --name ${AKS_CLUSTER_NAME}-${DATE} --output json)
-    echo ${SP} | jq . > aks_sp_cred.json
+    echo ${SP} | jq . > output/aks_sp_cred.json
     SP_NAME=$(echo ${SP} | jq -r .name)
     SP_APPID=$(echo ${SP} | jq -r .appId)
     SP_PWD=$(echo ${SP} | jq -r .password)
     SP_OBJECTID=$(az ad sp show --id ${SP_NAME} --query objectId -o tsv)
-    cp -f ${PARAMETERS_FILE} ${PARAMETERS_FILE}.bak
-	jqsubs 'existingServicePrincipalClientId' "${SP_APPID}" ${PARAMETERS_FILE}
-	jqsubs 'existingServicePrincipalClientSecret' "${SP_PWD}" ${PARAMETERS_FILE}
-	jqsubs 'existingServicePrincipalObjectId' "${SP_OBJECTID}" ${PARAMETERS_FILE}
-	jqsubs 'existingVirtualNetworkResourceGroup' "${RESOURCE_GROUP_NAME}" ${PARAMETERS_FILE}
+	jqsubs 'existingServicePrincipalClientId' "${SP_APPID}" ${OUTPUT_PARAMETERS_FILE}
+	jqsubs 'existingServicePrincipalClientSecret' "${SP_PWD}" ${OUTPUT_PARAMETERS_FILE}
+	jqsubs 'existingServicePrincipalObjectId' "${SP_OBJECTID}" ${OUTPUT_PARAMETERS_FILE}
+	jqsubs 'existingVirtualNetworkResourceGroup' "${RESOURCE_GROUP_NAME}" ${OUTPUT_PARAMETERS_FILE}
 fi
 
 echo "Generating GNU/Linux root SSH key pair..."
-ssh-keygen -b 2048 -t rsa -f linuxAdminSshKey -q -N ""
-jqsubs 'linuxAdminSshPublicKey' "$(cat linuxAdminSshKey.pub)" ${PARAMETERS_FILE}
+ssh-keygen -b 2048 -t rsa -f output/linuxAdminSshKey -q -N ""
+jqsubs 'linuxAdminSshPublicKey' "$(cat output/linuxAdminSshKey.pub)" ${OUTPUT_PARAMETERS_FILE}
 
 if [ "$(jq .parameters.createVnet.value arm/deploy-gpu-aks.parameters.json)" = 'true' ]
 then
-	jqsubs 'existingVirtualNetworkResourceGroup' "${RESOURCE_GROUP_NAME}" ${PARAMETERS_FILE}
-	jqsubs 'newOrExistingVirtualNetworkName' "${AKS_CLUSTER_NAME}" ${PARAMETERS_FILE}
+	jqsubs 'existingVirtualNetworkResourceGroup' "${RESOURCE_GROUP_NAME}" ${OUTPUT_PARAMETERS_FILE}
+	jqsubs 'newOrExistingVirtualNetworkName' "${AKS_CLUSTER_NAME}" ${OUTPUT_PARAMETERS_FILE}
 fi
 if ! [ -z ${DNS_PREFIX} ]; then
-	jqsubs 'dnsPrefix' "${DNS_PREFIX}" ${PARAMETERS_FILE}
+	jqsubs 'dnsPrefix' "${DNS_PREFIX}" ${OUTPUT_PARAMETERS_FILE}
 fi
-sed -i '/^$/d' ${PARAMETERS_FILE}
+sed -i '/^$/d' ${OUTPUT_PARAMETERS_FILE}
 
 echo "Deploying managed Kubernetes cluster..."
 if [ $(az group exists -g ${RESOURCE_GROUP_NAME} --subscription ${SUBSCRIPTION}) = 'false' ]; then
@@ -130,6 +132,7 @@ az deployment group create \
 	-g ${RESOURCE_GROUP_NAME} \
 	-n ${AKS_CLUSTER_NAME}-deployment \
 	--template-file ${TEMPLATE_FILE} \
-	--parameters @${PARAMETERS_FILE} \
+	--parameters @${OUTPUT_PARAMETERS_FILE} \
     --subscription ${SUBSCRIPTION} \
 	--verbose
+echo "FINISHED: You can find Azure AD SP credentials and root SSH keys at output folder."

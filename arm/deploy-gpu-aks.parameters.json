@@ -3,10 +3,10 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "resourceName": {
-      "value": "aks-we-fah-001"
+      "value": "aks-fah-001"
     },
     "existingVirtualNetworkResourceGroup": {
-      "value": "rg-we-fah-001"
+      "value": "rg-fah-001"
     },
     "dnsPrefix": {
       "value": "fah-calnus"
@@ -33,7 +33,7 @@
       "value": ""
     },
     "newOrExistingVirtualNetworkName": {
-      "value": "vnet-we-aks-fah-001"
+      "value": "vnet-aks-fah-001"
     },
     "newOrExistingLinuxSubnetName": {
       "value": "linuxAksSubnet"
@@ -51,7 +51,7 @@
       "value": "10.24.2.0/24"
     },
     "linuxAgentVMSize": {
-      "value": "Standard_NC6"
+      "value": "Standard_NC6_Promo"
     },
     "linuxMaxPods": {
       "value": 30

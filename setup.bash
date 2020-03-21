@@ -168,7 +168,7 @@ aks_clean () {
         clear
         CHOICES=($VALUES)
         if [ "${CHOICES[2]}" = "iknowwhatiamdoing" ]; then
-            CMD="scripts/clean-gpu-aks.bash --subscription ${CHOICES[0]} -g ${CHOICES[1]} --parameters-file arm/deploy-gpu-aks.parameters.json --iknowwhatiamdoing"
+            CMD="scripts/clean-gpu-aks.bash --subscription ${CHOICES[0]} -g ${CHOICES[1]} --parameters-file output/deploy-gpu-aks.parameters.json --iknowwhatiamdoing"
             echo "Issuing command => $CMD"
             sleep 3
             /bin/bash -c $CMD
@@ -239,9 +239,11 @@ k8s_fah () {
         sleep 3
         /bin/bash -c $CMD
         pause
-        sed -i "s/value: Anonymous/value: ${CHOICES[1]}/g" k8s/fah-deployment.yaml
-        sed -i "s/value: '0'/value: '${CHOICES[2]}'/g" k8s/fah-deployment.yaml
-        CMD="kubectl apply -f k8s/fah-deployment.yaml"
+        mkdir -p output
+        cp -f k8s/fah-deployment.yaml output/
+        sed -i "s/value: Anonymous/value: ${CHOICES[1]}/g" output/fah-deployment.yaml
+        sed -i "s/value: '0'/value: '${CHOICES[2]}'/g" output/fah-deployment.yaml
+        CMD="kubectl apply -f output/fah-deployment.yaml"
         echo "Issuing command => $CMD"
         sleep 3
         /bin/bash -c $CMD

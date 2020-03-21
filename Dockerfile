@@ -10,7 +10,8 @@ LABEL title="Folding@home client with CUDA drivers" \
   bbs="telnet://bbs.hispamsx.org" \
   twitter="@cmilanf" \
   thanksto="Beatriz Sebastián Peña" \
-  usage="docker run -it --rm cmilanf/fahclient --user=<username> --team=<team number> --gpu=<true or false> --smp=<true or false> --power=<light, medium or full>"
+  usage="docker run -it --rm cmilanf/fahclient --user=<username> --team=<team number> --gpu=<true or false> --smp=<true or false> --power=<light, medium or full>" \
+  usage_advanced="docker run -it -m <memory limit in bytes> --cpus <number of cpus to use> --rm cmilanf/fahclient --user=<username> --team=<team number> --gpu=<true or false> --smp=<true or false> --power=<light, medium or full> --cpus <number of cpus to use> --memory=<memory usage in bytes> --cause=ANY"
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG FAHCLIENT_VERSION=7.5.1
